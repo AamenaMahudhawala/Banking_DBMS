@@ -1,486 +1,207 @@
-'''
-Created on Feb 2, 2022
-
-@author: aamena1
-
-'''
-#IMPORTING REQUIRED MODULES
+# IMPORTING REQUIRED MODULES
 import mysql.connector as sql
-from datetime import date,timedelta
-import random 
+from datetime import date, timedelta
+import random
+import csv
 
-import csv 
+# DECOR FUNCTION
+def decor(msg):
+    print(f"\n---✧ {msg} ✧---\n")
 
+# CONNECTING TO MYSQL    
+mydb = sql.connect(host="hostname", user="username", database="databasename")
+mycursor = mydb.cursor(buffered=True)
 
-#DECOR FUNCTION 
-def decor(X):
-    print()
-    print('X')
-    print()
-    
+Login, OG_CODE = "Fail", "None"
 
-     
-    
-#CONNECTING TO MYSQL    
-mydb=sql.connect(host="hostname",user="username",database="database_name")
-mycursor=mydb.cursor(buffered=True)
+# WELCOME MESSAGE
+decor("DIAMOND BANK WELCOMES YOU")
 
+def valid_phone(phone):
+    return phone.isnumeric() and len(phone) == 10
 
+#INPUT USER INFORMATION
+def input_account_info():
+    first_name = input("Enter First Name: ").strip()
+    last_name = input("Enter Last Name: ").strip()
+    phone = input("Enter mobile number: ").strip()
 
-Login = "Fail"  
-OG_CODE = "None"
-Tenure = None
+    if not (first_name.isalpha() and last_name.isalpha() and valid_phone(phone)):
+        decor("Error: Invalid input")
+        return None
 
-#WELCOME MESSAGE
-decor("---✧DIAMOND BANK WELCOMES YOU✧---")
+    return first_name,last_name,phone
 
-while True:
-    
-    print('1:Add a new account\
-\n2:Login to a existing account \n3:Exit')
-    print()
-    x = int(input())
-    
-    #ADDING A NEW ACCOUNT
-    if x == 1:
-        decor("---✧---")
-        #INPUT USER INFORMATION
-        First_Name = input("Enter First Name: ")
-        Last_Name = input("Enter Last Name: ")
-        Phone_No = input("Enter mobile number: ")
-        
-        First_Name = First_Name.strip()
-        Last_Name = Last_Name.strip()
-        Phone_No = Phone_No.strip()
-        
-        if (First_Name.isalpha()!= True) or (Last_Name.isalpha()!= True) or (Phone_No.isnumeric()!= True) or (int(len(Phone_No)) != 10):
-            print(int(len(Phone_No)))
-            decor('---✧Error✧---')
-            continue
-        
-        
-        print("FOR INDENTIFICATION \n1:Passport.No \n2:Aadhaar No")
-        print()
-        method = int(input())
-        print()
-        if method == 1:
-            indentification = input("Enter passport.no: ")
-            Identification = 'PNo: '+ indentification
-            
-        elif method == 2:
-            indentification = input("Enter Aadhaar No: ")
-            Identification = 'ANo: '+ indentification
-        else:
-            print('---✧Error✧---')
-            continue
-        
-        
-        
-        Current_Amount = float(input("Enter deposit amount: "))
-        while Current_Amount<1000:
-            #SETTING A MINIMUM DEPOSIT AMOUNT
-            decor("---You cannot enter a amount less than Rs1000---")
-            
-            Current_Amount = float(input("Enter deposit amount: "))
-        
-        decor("---✧---")
-        #TYPES OF ACCOUNTS OFFERED
-        print("Currently Our Bank Offers Two Types of Accounts:\nSA:Savings Account \nFD:Fixed Deposit Account")
-        Type = input("Enter the type of account you wish to have: ")  
-        
-        Status = "OPEN"
-        x = str(random.randint(1000000000,9999999999))
-        code = Type+First_Name[0]+Last_Name[1]+x 
-       
-        if Type == 'FD':
-            
-            
-            SA_Code = input("Enter your Savings Account Number:")
-            st = ("Select * from Accounts where CODE = '{}' AND STATUS = 'OPEN'").format(SA_Code)
-            mycursor.execute(st)
-            data = mycursor.fetchall()
-            count = mycursor.rowcount
-            #CHECKING FOR A SAVINGS ACCOUNT
-            if count == 0:
-                
-                print("You must have a Open Savings Account before opening a Fixed Deposit Account")
-                decor("---✧---")
-                continue
-            else:
-                
-                #INFO NEEDED TO CREATE A FD ACCOUNT            
-                Tenure = float(input("Enter investment tenure in months: "))
-                print("Available rate range 0.5%-5%")
-                interest_rate = float(input("Enter Interest rate: "))
-                while 0.5<=interest_rate>=5 :
-                    print("Available rate range 0.5%-5%")
-                    interest_rate = float(input("Enter Interest rate: "))
-                current_date = date.today()
-                maturity_date = current_date + timedelta(Tenure*30)
-                #STORING USERS INFORMATION INTO A TABLE
-                st = "INSERT INTO Accounts(CODE,FIRSTNAME,LASTNAME,PHONENO,IDENTIFICATION,CURRENTAMT,TYPE,TENURE,INTEREST_RATE,ACCOUNT_CREATED_ON,MATURITY_DATE,STATUS) VALUES('{}','{}','{}','{}','{}',{},'{}',{},{},'{}','{}','{}')".format(code,First_Name,Last_Name,Phone_No,Identification,Current_Amount,Type,Tenure,interest_rate,current_date,maturity_date,Status) 
-                mycursor.execute(st)
-                mydb.commit()
-            
-        elif Type == 'SA':
-            #STORING USERS INFORMATION INTO A TABLE
-            current_date = date.today()
-            st = "INSERT INTO Accounts(CODE,FIRSTNAME,LASTNAME,PHONENO,IDENTIFICATION,CURRENTAMT,TYPE,ACCOUNT_CREATED_ON,STATUS) VALUES('{}','{}','{}','{}','{}',{},'{}','{}','{}')".format(code,First_Name,Last_Name,Phone_No,Identification,Current_Amount,Type,current_date,Status) 
-            mycursor.execute(st)
-            mydb.commit()
-        else:
-            decor('---✧Error✧---')
-            continue
-        
-                          
-        New_Password = input("Enter New Password: ")
-        
-        decor("---✧---")
-        print(f"---Your Account Number is {code}---")
-        
-        
-        #STORING USERS INFORMATION INTO A TABLE
-        new_st = ("INSERT INTO AccountsandPassword(Code,PASSWORD,STATUS) VALUES('{}','{}','{}')").format(code,New_Password,Status) 
-        mycursor.execute(new_st)
-        mydb.commit()
-        print("---✧New Account has been created✧---")
-        decor("---✧---")    
-        #STORING ACCOUNT NUMBER
-        OG_CODE = code
-          
-        
-    #LOGGING INTO A ACCOUNT
-    elif x ==2:
-        decor("---✧---")
-        #3 TRIES TO FILL IN LOGIN INFORMATION 
-        Try = 3
-        while Try>0:
-            print("No.of tries left: ",Try)
-            Code = input("Enter Account Number: ")
-            Password = input("Enter Password: ")
-            
-            #CHECKING IF ACCOUNT NUMBER AND PASSWORD MATCH
-            st = ("Select * from AccountsandPassword where Code = '{}' AND PASSWORD = '{}' AND STATUS = 'OPEN'").format(Code,Password)
-            mycursor.execute(st)
-            data = mycursor.fetchall()
-            count = mycursor.rowcount
-            if count == 0:
-                print()
-                print("Invalid AccountCode/Password or This Account has been Closed")
-                Try -=1
-            else:
-                break    
-    
-        if Try>=1:
-            Login = "Successful" 
-            
-            #STORING ACCOUNT NUMBER
-            OG_CODE = Code
-            decor("---✧Login Successful✧---")
-            mycursor.reset()
-    
-        else:
-            decor("---Login Fail---")
-        #AFTER LOGIN IS SUCCESSFUL
-        
-        while Login == "Successful":
-            
-            
-            print('1:Checking your Balance \n2:Deposit money into account\
-\n3:Withdraw money from an account \n4:Transfer money from account \n5:Log Out \n6:Close Account')
-            y = int(input())
-            
-            
-            if y == 1:
-                decor("---✧---") 
-                new_st = ("SELECT CURRENTAMT FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                mycursor.execute(new_st)
-                data = mycursor.fetchall()
-                
-                print(f"---✧BALANCE IS ₹{data[0][0]}✧---")
-                decor("---✧---")
-            
-            #DEPOSITING MONEY
-            elif y == 2:
-                decor("---✧---")
-                amount = float(input("Enter the amount you wish to deposit: "))
-                st = ("UPDATE Accounts SET CURRENTAMT = CURRENTAMT + {} WHERE CODE = '{}'").format(amount,OG_CODE)
-                
-                mycursor.execute(st)
-                mydb.commit()
-                new_st = ("SELECT CURRENTAMT FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                mycursor.execute(new_st)
-                data = mycursor.fetchall()
-                
-                decor("---✧---")
-            
-                print(f"---✧CURRENT BALANCE UPDATED✧---\n\n₹{amount} DEPOSITED \nNEW BALANCE IS ₹{data[0][0]}")
-                decor("---✧---")
-                mydb.commit()
-            
-            #WITHDRAWING MONEY    
-            elif y == 3:
-                decor("---✧---")
-                
-                #STORING INITIAL BALANCE
-                new_st = ("SELECT CURRENTAMT FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                mycursor.execute(new_st)
-                temp = mycursor.fetchall()
-                
-                #CHECKING IF ACCOUNT IS A SAVINGS ACCOUNT OR A FD ACCOUNT
-                if OG_CODE[0:2] == 'SA':
-                    amount = float(input("Enter the amount you wish to withdraw: "))
-                    st = ("UPDATE Accounts SET CURRENTAMT = IF (CURRENTAMT-{}>500,CURRENTAMT - {},CURRENTAMT) WHERE CODE = '{}'").format(amount,amount,OG_CODE)
-                    mycursor.execute(st)
-                    mydb.commit()
-                    new_st = ("SELECT CURRENTAMT FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                    mycursor.execute(new_st)
-                    data = mycursor.fetchall()
-                
-                    #WITHRDRAWAL IS ALLOWED ONLY IF LEFTOVER BALANCE IS OVER Rs500 
-                    if temp == data:
-                        print("AMOUNT CANNOT BE WITHDRAWN AS BALANCE FALLS BELOW ₹500")
-                    else:    
-                        print(f"---✧CURRENT BALANCE UPDATED✧---\n\n₹{amount} WITHDRAWN \nNEW BALANCE IS ₹{data[0][0]}")
-                
-                    decor("---✧---")
-                
-                elif OG_CODE[0:2] == 'FD':
-                    new_st = ("SELECT MATURITY_DATE FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                    mycursor.execute(new_st)
-                    temp = mycursor.fetchall()
-                    store = temp[0][0]
-                    st = ("SELECT ACCOUNT_CREATED_ON FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                    mycursor.execute(st)
-                    xtemp = mycursor.fetchall()
-                    store_st = xtemp[0][0]
-                    i = ("SELECT INTEREST_RATE FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                    mycursor.execute(i)
-                    itemp = mycursor.fetchall()
-                    interest_st = itemp[0][0]
-                    
-                    #INCASE OF FD ACCOUNT MATURED
-                    if store == date.today():
-                        
-                        mycursor.execute("SELECT TENURE FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                        K = mycursor.fetchall()
-                        T = float(K[0][0])
-                        mycursor.execute("UPDATE Accounts SET CURRENTAMT = CURRENTAMT + (CURRENTAMT*{}*{})/(100*12) WHERE CODE = '{}'").format(T,interest_st,OG_CODE)
-                        print("---✧YOUR FD HAS MATURED✧---")
-                        new_st = ("SELECT CURRENTAMT FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                        mycursor.execute(new_st)
-                        data = mycursor.fetchall()
-                
-                        decor("---✧---")
-                        print(f"---✧FD BALANCE IS ₹{data[0][0]}✧---")
-                        ans = input("Type OK to transfer your money into your savings account: ")
-                        if ans == 'OK':
-                            sa = input("Enter Savings Account Number: ")
-                            st = ("UPDATE Accounts SET CURRENTAMT = CURRENTAMT + {} WHERE CODE = '{}'").format(data[0][0],sa)
-                            mycursor.execute(st)
-                            mydb.commit()
-                            st = ("UPDATE Accounts SET CURRENTAMT = CURRENTAMT - CURRENTAMT WHERE CODE = '{}'").format(OG_CODE)
-                            mycursor.execute(st)
-                            mydb.commit()
-                            print(f"---✧AMOUNT TRANSFERRED IS ₹{data[0][0]}✧---")
-                            decor("---✧---")
-                            mydb.commit()
-                            Status = "MATURED-CLOSED"
-                            st = ("UPDATE FROM Accounts SET STATUS = '{}' WHERE CODE ='{}'").format(Status,OG_CODE)
-                            ST = ("UPDATE FROM AccountsandPassword SET STATUS = '{}' WHERE CODE ='{}'").format(Status,OG_CODE)
-                            mycursor.execute(st)
-                            mydb.commit()
-                        
-                    #INCASE OF ACCOUNT NOT YET MATURED
-                    else:
-                        #CONFORMATION STATEMENT
-                        print("YOUR FD IS NOT YET MATURED,DO U STILL WISH TO WITHDRAW THE MONEY?")
-                        new = input("Yes/No: ")
-                        if new == "Yes":
-                            a = ("SELECT DATEDIFF('{}','{}')".format(date.today(),store_st))
-                            mycursor.execute(a)
-                            b = mycursor.fetchall()
-                            c = b[0][0]
-                            mycursor.execute("UPDATE Accounts SET CURRENTAMT = CURRENTAMT + (CURRENTAMT*{}*{})/(100*12) WHERE CODE = '{}'".format(c,interest_st-0.5,OG_CODE))
-                            new_st = ("SELECT CURRENTAMT FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                            mycursor.execute(new_st)
-                            data = mycursor.fetchall()
-                
-                            decor("---✧---")
-                            print(f"---✧FD BALANCE IS ₹{data[0][0]}✧---")
-                            ans = input("Type OK to transfer your money into your savings account: ")
-                            if ans == 'OK':
-                                #TRANSFERING THE MONEY TO SA ACCOUNT
-                                sa = input("Enter Savings Account Number: ")
-                                st = ("UPDATE Accounts SET CURRENTAMT = CURRENTAMT + {} WHERE CODE = '{}'").format(data[0][0],sa)
-                                mycursor.execute(st)
-                                mydb.commit()
-                                st = ("UPDATE Accounts SET CURRENTAMT = CURRENTAMT - CURRENTAMT WHERE CODE = '{}'").format(OG_CODE)
-                                mycursor.execute(st)
-                                mydb.commit()
-                                print(f"---✧AMOUNT TRANSFERRED IS ₹{data[0][0]}✧---")
-                                decor("---✧---")
-                                mydb.commit()
-                                
-                                Status = "IMMATURE-CLOSED"
-                                st = ("UPDATE Accounts SET STATUS = '{}' WHERE CODE ='{}'").format(Status,OG_CODE)
-                                ST = ("UPDATE AccountsandPassword SET STATUS = '{}' WHERE Code ='{}'").format(Status,OG_CODE)
-                                mycursor.execute(st)
-                                mydb.commit()
-                                mycursor.execute(ST)
-                                mydb.commit()
-                                continue
-                            
-                            else:
-                                decor("---✧---")
-                                continue    
-                         
-            
-            #TRANSFERING MONEY BETWEEN ACCOUNTS    
-            elif y == 4:
-                if OG_CODE[0:2] == 'FD':
-                    print("You cannot transfer directly from a FD Account")
-                    break
-                decor("---✧---")
-                other_code = input("Enter the Payee's account number: ")
-                Status = 'OPEN'
-                #CHECKING IF ACCOUNT EXISTS
-                check_st = ("SELECT * FROM Accounts WHERE CODE = '{}' AND STATUS = '{}'").format(other_code,Status)
-                mycursor.execute(check_st)
-                data = mycursor.fetchall()
-                if count == 0:
-                    print("Account does not exist or Has been closed")
-                    break
-                
-                      
-                
-                amount = float(input("Enter amount to be transfered: "))  
-                
-                #STORING INITIAL BALANCE  
-                new_st = ("SELECT CURRENTAMT FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                mycursor.execute(new_st)
-                temp = mycursor.fetchall()
-                   
-                st = ("UPDATE Accounts SET CURRENTAMT = IF (CURRENTAMT-{}>500,CURRENTAMT - {},CURRENTAMT) WHERE CODE = '{}'").format(amount,amount,OG_CODE)
-                mycursor.execute(st)
-                mydb.commit()
-                new_st = ("SELECT CURRENTAMT FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                mycursor.execute(new_st)
-                data = mycursor.fetchall()
-                
-                #TRANSFER WILL TAKE PLACE ONLY IF LEFTOVER BALANCE IS ABOVE Rs500
-                if temp == data:
-                    print("AMOUNT CANNOT BE TRANSFERRED AS BALANCE FALLS BELOW ₹500")
-                else:
-                    st = ("UPDATE Accounts SET CURRENTAMT = CURRENTAMT + {} WHERE CODE ='{}'").format(amount,other_code)
-                    mycursor.execute(st)
-                    mydb.commit()    
-                    print(f"---✧CURRENT BALANCE UPDATED✧---\n\n₹{amount} TRANSFERRED TO ACCOUNT NUMBER: {other_code} \nNEW BALANCE IS ₹{data[0][0]}")
-                
-                decor("---✧---")
-                
-                mydb.commit()
-            
-            #LOGGING OUT OF AN ACCOUNT    
-            elif y == 5:
-                print("---✧YOU HAVE LOGGED OUT✧---")
-                print()
-                Login = "False"
-            
-            #CLOSING A ACCOUNT          
-            elif y == 6 :
-                decor("---✧---")
-                #CONFORMATION
-                #RETURNING ANY REMAINING BALANCE
-                cash_st = ("SELECT CURRENTAMT FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                mycursor.execute(cash_st)
-                
-                
-                ask=input("Are you sure you wish to close your account? yes/no: ") 
-                if ask == 'yes':
-                    decor("---✧---")
-                    #EXTRA SECURITY STEP
-                    password = input("Please re-enter your password: ")
-                    nst = ("Select * from AccountsandPassword where Code = '{}' AND PASSWORD = '{}' AND STATUS = 'OPEN'").format(OG_CODE,password)
-                    mycursor.execute(nst)
-                    data = mycursor.fetchall()
-                    count = mycursor.rowcount
-                    
-                    #LOG OUT IF PASSWORD IS INVALID
-                    if count == 0:
-                        print("---Invalid Password---")
-                        print("---YOU WILL BE LOGGED OUT---")
-                        print()
-                        Login = "False"
-                    
-                    #CLOSING AN ACCOUNT    
-                    else:
-                        new_st = ("SELECT CURRENTAMT FROM Accounts WHERE CODE = '{}'").format(OG_CODE)
-                        mycursor.execute(new_st)
-                        data = mycursor.fetchall()
-                        st = ("UPDATE Accounts SET CURRENTAMT = CURRENTAMT - CURRENTAMT WHERE CODE = '{}'").format(OG_CODE)
-                        mycursor.execute(st)
-                        mydb.commit()
-                        
-                        print(f"---✧AMOUNT RETURNED IS ₹{data[0][0]}✧---")
-                        decor("---✧---")
-                        cash_st = ()
-                        Status = "CLOSED"
-                        st = ("UPDATE Accounts SET STATUS = '{}' WHERE CODE = '{}'").format(Status,OG_CODE)
-                        new_st = ("UPDATE AccountsandPassword SET STATUS = '{}' WHERE Code = '{}'").format(Status,OG_CODE)
-                        mycursor.execute(new_st)
-                        mydb.commit()
-                        mycursor.execute(st)
-                        
-                        mydb.commit()
-                        print("---✧YOUR ACCOUNT IS SUCCESFULLY CLOSED✧---")
-                        print()
-                        Login = "False"
-                
-                else:
-                    print("---✧CLOSING OF ACCOUNT UNSUCCESSFUL✧---")
-                    print()
-    
-    
-    
-    
+#ADDING A NEW ACCOUNT
+def create_account():
+    decor("--- Create New Account ---")
+    info = input_account_info()
+    if not info:
+        return
+
+    first_name, last_name, phone = info
+    ident_type = input("1:Passport No \n2:Aadhaar No\nChoose identification type: ")
+    ident_no = input("Enter identification number: ")
+    identification = f"{'PNo' if ident_type == '1' else 'ANo'}: {ident_no}"
+
+    current_amt = float(input("Enter deposit amount: "))
+    while current_amt < 1000:
+        decor("Amount cannot be less than Rs 1000")
+        current_amt = float(input("Enter deposit amount: "))
+
+    account_type = input("Enter account type (SA: Savings Account / FD: Fixed Deposit): ")
+    code = f"{account_type}{first_name[0]}{last_name[1]}{random.randint(1000000000, 9999999999)}"
+
+    if account_type == "FD":
+        SA_code = input("Enter your Savings Account Number: ")
+        mycursor.execute(f"SELECT * FROM Accounts WHERE CODE = '{SA_code}' AND STATUS = 'OPEN'")
+        if mycursor.rowcount == 0:
+            decor("You must have an Open Savings Account before opening a Fixed Deposit Account")
+            return
+
+        tenure = float(input("Enter investment tenure in months: "))
+        interest_rate = float(input("Enter interest rate (0.5%-5%): "))
+        maturity_date = date.today() + timedelta(days=tenure*30)
+
+        query = (f"INSERT INTO Accounts (CODE, FIRSTNAME, LASTNAME, PHONENO, IDENTIFICATION, CURRENTAMT, TYPE, TENURE, INTEREST_RATE, "
+                 f"ACCOUNT_CREATED_ON, MATURITY_DATE, STATUS) "
+                 f"VALUES ('{code}', '{first_name}', '{last_name}', '{phone}', '{identification}', {current_amt}, '{account_type}', "
+                 f"{tenure}, {interest_rate}, '{date.today()}', '{maturity_date}', 'OPEN')")
     else:
-        #DATA BACKUP
-        decor("---✧---")
-        st = ("SELECT * FROM Accounts")
-        mycursor.execute(st)
-        data = mycursor.fetchall()
-        other = ("SELECT * FROM AccountsandPassword")
-        mycursor.execute(other)
-        otherdata = mycursor.fetchall()
-        with open("BANKING MANAGEMENT SYSTEM.csv",'w',newline = '') as backupfiles:
-            writer = csv.writer(backupfiles,delimiter = '|')
-            writer.writerow("Accounts")
-            writer.writerows(data)
-            writer.writerow(" ")  
-            writer.writerow("AccountsandPassword")
-            writer.writerows(otherdata)  
-        
-        #FAREWELL MESSAGE    
-        exit("---✧THANK YOU FOR USING DIAMOND BANK✧--- \n---✧Exiting✧---")  
+        query = (f"INSERT INTO Accounts (CODE, FIRSTNAME, LASTNAME, PHONENO, IDENTIFICATION, CURRENTAMT, TYPE, ACCOUNT_CREATED_ON, STATUS) "
+                 f"VALUES ('{code}', '{first_name}', '{last_name}', '{phone}', '{identification}', {current_amt}, '{account_type}', '{date.today()}', 'OPEN')")
 
-     
+    mycursor.execute(query)
+    mydb.commit()
+
+    new_password = input("Enter New Password: ")
+    mycursor.execute(f"INSERT INTO AccountsandPassword (Code, PASSWORD, STATUS) VALUES ('{code}', '{new_password}', 'OPEN')")
+    mydb.commit()
+
+    decor(f"Your Account Number is {code}")
+    decor("New Account has been created")
+#LOGGING IN
+def login():
+    decor("Login")
+    for _ in range(3):
+        code = input("Enter Account Number: ")
+        password = input("Enter Password: ")
+        mycursor.execute(f"SELECT * FROM AccountsandPassword WHERE Code = '{code}' AND PASSWORD = '{password}' AND STATUS = 'OPEN'")
+        if mycursor.rowcount > 0:
+            decor("Login Successful")
+            return code
+        else:
+            print("Invalid AccountCode/Password")
+    return None
+
+#CHECKING BALANCE
+def check_balance(code):
+    mycursor.execute(f"SELECT CURRENTAMT FROM Accounts WHERE CODE = '{code}'")
+    balance = mycursor.fetchone()[0]
+    decor(f"Balance is ₹{balance}")
+
+#DEPOSITING MONEY
+def deposit_money(code):
+    amount = float(input("Enter the amount to deposit: "))
+    mycursor.execute(f"UPDATE Accounts SET CURRENTAMT = CURRENTAMT + {amount} WHERE CODE = '{code}'")
+    mydb.commit()
+    check_balance(code)
+
+#WITHDRAWING MONEY    
+def withdraw_money(code):
+    mycursor.execute(f"SELECT * FROM Accounts WHERE CODE = '{code}'")
+    account_details = mycursor.fetchone()
+
+    current_amt, account_type, maturity_date, interest_rate, tenure = account_details[5], account_details[6], account_details[10], account_details[8], account_details[7]
+
+    amount = float(input("Enter the amount to withdraw: "))
+
+    if account_type == 'SA':
+        # Withdraw money from a savings account, but balance must not go below Rs 500
+        mycursor.execute(f"UPDATE Accounts SET CURRENTAMT = IF(CURRENTAMT - {amount} > 500, CURRENTAMT - {amount}, CURRENTAMT) WHERE CODE = '{code}'")
+        mydb.commit()
+        check_balance(code)
+    elif account_type == 'FD':
+        # Withdraw money from a Fixed Deposit account with interest calculation if matured
+        current_date = date.today()
+        if current_date >= maturity_date:
+            #FD has matured, calculate the interest and allow withdrawal
+            total_months = tenure
+            interest_amt = current_amt * (interest_rate / 100) * (total_months / 12)
+            final_amt = current_amt + interest_amt
+            decor(f"FD Maturity Date reached. Withdrawing ₹{final_amt} including interest ₹{interest_amt}")
+            mycursor.execute(f"UPDATE Accounts SET CURRENTAMT = 0, STATUS = 'CLOSED' WHERE CODE = '{code}'")
+        else:
+            # FD not matured, allow withdrawal only if customer accepts the penalty
+            print("FD not matured yet. A penalty will apply for early withdrawal.")
+            penalty_amt = current_amt * 0.01  # Assume 1% penalty
+            proceed = input(f"Early withdrawal penalty is ₹{penalty_amt}. Do you wish to proceed? (yes/no): ").lower()
+            if proceed == "yes":
+                final_amt = current_amt - penalty_amt
+                decor(f"Withdrawing ₹{final_amt} after ₹{penalty_amt} penalty")
+                mycursor.execute(f"UPDATE Accounts SET CURRENTAMT = 0, STATUS = 'CLOSED' WHERE CODE = '{code}'")
+        mydb.commit()
+        check_balance(code)
+#TRANSFERING MONEY BETWEEN ACCOUNTS    
+def transfer_money(code):
+    if code[:2] == 'FD':
+        print("You cannot transfer directly from a FD Account")
+        return
+    recipient = input("Enter the recipient's account number: ")
+    amount = float(input("Enter the amount to transfer: "))
+    mycursor.execute(f"UPDATE Accounts SET CURRENTAMT = CURRENTAMT - {amount} WHERE CODE = '{code}'")
+    mycursor.execute(f"UPDATE Accounts SET CURRENTAMT = CURRENTAMT + {amount} WHERE CODE = '{recipient}'")
+    mydb.commit()
+    decor(f"₹{amount} transferred to {recipient}")
+
+def close_account(code):
+    ask = input("Are you sure you want to close your account? (yes/no): ").lower()
+    if ask == 'yes':
+        mycursor.execute(f"UPDATE Accounts SET CURRENTAMT = 0, STATUS = 'CLOSED' WHERE CODE = '{code}'")
+        mydb.commit()
+        decor("Account Closed")
+
+def backup_data():
+    with open("BANKING_MANAGEMENT_SYSTEM.csv", 'w', newline='') as backup_file:
+        writer = csv.writer(backup_file, delimiter='|')
+        writer.writerow(["Accounts"])
+        mycursor.execute("SELECT * FROM Accounts")
+        writer.writerows(mycursor.fetchall())
+        writer.writerow(["AccountsandPassword"])
+        mycursor.execute("SELECT * FROM AccountsandPassword")
+        writer.writerows(mycursor.fetchall())
+    decor("Data backed up successfully")
+
+# MAIN LOOP
+while True:
+    print("1: Add a new account\n2: Login to an existing account\n3: Exit")
+    choice = int(input())
+
+    if choice == 1:
+        create_account()
+    elif choice == 2:
+        user_code = login()
+        if user_code:
+            while True:
+                print("1: Check Balance\n2: Deposit Money\n3: Withdraw Money\n4: Transfer Money\n5: Log Out\n6: Close Account")
+                action = int(input())
+                if action == 1:
+                    check_balance(user_code)
+                elif action == 2:
+                    deposit_money(user_code)
+                elif action == 3:
+                    withdraw_money(user_code)
+                elif action == 4:
+                    transfer_money(user_code)
+                elif action == 5:
+                    decor("You have logged out")
+                    break
+                elif action == 6:
+                    close_account(user_code)
+                    break
+    elif choice == 3:
+        backup_data()
+        decor("Thank you for using Diamond Bank")
+        break
 
 mydb.close()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
